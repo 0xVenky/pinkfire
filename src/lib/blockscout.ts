@@ -98,9 +98,11 @@ export async function getUniTransfersToDeadAddress(
   while (hasMore) {
     try {
       let url = `${CONSTANTS.BLOCKSCOUT_BASE_URL}/addresses/${CONSTANTS.DEAD_ADDRESS}/token-transfers`;
+      // Use token filter to directly query UNI token transfers only
       const params = new URLSearchParams({
         type: 'ERC-20',
         filter: 'to',
+        token: CONSTANTS.UNI_TOKEN,
       });
 
       if (nextPageParams) {
@@ -110,15 +112,12 @@ export async function getUniTransfersToDeadAddress(
       }
 
       url = `${url}?${params.toString()}`;
+      console.log('Fetching:', url);
 
       const response = await fetchWithRetry<BlockScoutTransferResponse>(url);
+      console.log('Got items:', response.items?.length || 0);
 
       for (const transfer of response.items) {
-        // Only process UNI token transfers
-        if (transfer.token.address.toLowerCase() !== CONSTANTS.UNI_TOKEN.toLowerCase()) {
-          continue;
-        }
-
         const txTimestamp = new Date(transfer.timestamp).getTime();
 
         // Skip if before start date
@@ -160,6 +159,7 @@ export async function getUniTransfersToDeadAddress(
     }
   }
 
+  console.log('Total transactions found:', transactions.length);
   return transactions;
 }
 
