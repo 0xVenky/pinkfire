@@ -19,14 +19,8 @@ interface SummaryResponse {
   error?: string;
 }
 
-function formatNumber(value: number, decimals = 2): string {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(decimals)}M`;
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(decimals)}K`;
-  }
-  return value.toLocaleString(undefined, { maximumFractionDigits: decimals });
+function formatNumber(value: number): string {
+  return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
 function formatUSD(value: number): string {
