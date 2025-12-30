@@ -12,10 +12,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const totalBurned = getTotalBurned();
-    const todayBurns = getTodayBurns();
-    const historicalUsdValue = getHistoricalUsdValue();
-    const latestDailyBurn = getLatestDailyBurn();
+    const totalBurned = await getTotalBurned();
+    const todayBurns = await getTodayBurns();
+    const historicalUsdValue = await getHistoricalUsdValue();
+    const latestDailyBurn = await getLatestDailyBurn();
 
     // Try to get current price, but don't block if it fails
     let currentPrice: number | null = null;

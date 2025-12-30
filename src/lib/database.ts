@@ -1,209 +1,169 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { createClient } from '@libsql/client';
 import type { DailyBurn, BurnTransaction } from '@/types';
 import { CONSTANTS } from './constants';
 
-const DB_PATH = path.join(process.cwd(), 'data', 'burns.db');
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
 
-let db: Database.Database | null = null;
+export const db = createClient({
+  url: url || 'file:local.db',
+  authToken: authToken,
+});
 
-export function getDb(): Database.Database {
-  if (!db) {
-    // Ensure data directory exists
-    const dataDir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    initializeSchema();
-  }
-  return db;
+export async function getDailyBurns(): Promise<DailyBurn[]> {
+  const result = await db.execute({
+    sql: `
+      SELECT * FROM daily_burns
+      WHERE date >= ?
+      ORDER BY date ASC
+    `,
+    args: [CONSTANTS.START_DATE]
+  });
+  return result.rows as unknown as DailyBurn[];
 }
 
-function initializeSchema(): void {
-  const database = db!;
-
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS daily_burns (
-      date TEXT PRIMARY KEY,
-      cumulative_uni REAL NOT NULL,
-      daily_uni REAL NOT NULL,
-      uni_price_usd REAL,
-      daily_usd_value REAL,
-      cumulative_usd_value REAL,
-      updated_at TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS burn_transactions (
-      tx_hash TEXT PRIMARY KEY,
-      block_number INTEGER NOT NULL,
-      timestamp TEXT NOT NULL,
-      uni_amount REAL NOT NULL,
-      uni_price_usd REAL,
-      usd_value REAL,
-      from_address TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_burn_transactions_timestamp
-    ON burn_transactions(timestamp);
-
-    CREATE INDEX IF NOT EXISTS idx_daily_burns_date
-    ON daily_burns(date);
-  `);
+export async function getDailyBurnByDate(date: string): Promise<DailyBurn | undefined> {
+  const result = await db.execute({
+    sql: 'SELECT * FROM daily_burns WHERE date = ?',
+    args: [date]
+  });
+  return result.rows[0] as unknown as DailyBurn | undefined;
 }
 
-export function getDailyBurns(): DailyBurn[] {
-  const database = getDb();
-  const stmt = database.prepare(`
-    SELECT * FROM daily_burns
-    WHERE date >= ?
-    ORDER BY date ASC
-  `);
-  return stmt.all(CONSTANTS.START_DATE) as DailyBurn[];
+export async function upsertDailyBurn(burn: DailyBurn): Promise<void> {
+  await db.execute({
+    sql: `
+      INSERT INTO daily_burns (date, cumulative_uni, daily_uni, uni_price_usd, daily_usd_value, cumulative_usd_value, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(date) DO UPDATE SET
+        cumulative_uni = excluded.cumulative_uni,
+        daily_uni = excluded.daily_uni,
+        uni_price_usd = excluded.uni_price_usd,
+        daily_usd_value = excluded.daily_usd_value,
+        cumulative_usd_value = excluded.cumulative_usd_value,
+        updated_at = excluded.updated_at
+    `,
+    args: [
+      burn.date,
+      burn.cumulative_uni,
+      burn.daily_uni,
+      burn.uni_price_usd || null,
+      burn.daily_usd_value || null,
+      burn.cumulative_usd_value || null,
+      burn.updated_at
+    ]
+  });
 }
 
-export function getDailyBurnByDate(date: string): DailyBurn | undefined {
-  const database = getDb();
-  const stmt = database.prepare(`
-    SELECT * FROM daily_burns WHERE date = ?
-  `);
-  return stmt.get(date) as DailyBurn | undefined;
-}
-
-export function upsertDailyBurn(burn: DailyBurn): void {
-  const database = getDb();
-  const stmt = database.prepare(`
-    INSERT INTO daily_burns (date, cumulative_uni, daily_uni, uni_price_usd, daily_usd_value, cumulative_usd_value, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(date) DO UPDATE SET
-      cumulative_uni = excluded.cumulative_uni,
-      daily_uni = excluded.daily_uni,
-      uni_price_usd = excluded.uni_price_usd,
-      daily_usd_value = excluded.daily_usd_value,
-      cumulative_usd_value = excluded.cumulative_usd_value,
-      updated_at = excluded.updated_at
-  `);
-  stmt.run(
-    burn.date,
-    burn.cumulative_uni,
-    burn.daily_uni,
-    burn.uni_price_usd,
-    burn.daily_usd_value,
-    burn.cumulative_usd_value,
-    burn.updated_at
-  );
-}
-
-export function getBurnTransactions(): BurnTransaction[] {
-  const database = getDb();
-  const stmt = database.prepare(`
+export async function getBurnTransactions(): Promise<BurnTransaction[]> {
+  const result = await db.execute(`
     SELECT * FROM burn_transactions
     ORDER BY timestamp DESC
   `);
-  return stmt.all() as BurnTransaction[];
+  return result.rows as unknown as BurnTransaction[];
 }
 
-export function getLatestBurnTransaction(): BurnTransaction | undefined {
-  const database = getDb();
-  const stmt = database.prepare(`
+export async function getLatestBurnTransaction(): Promise<BurnTransaction | undefined> {
+  const result = await db.execute(`
     SELECT * FROM burn_transactions
     ORDER BY block_number DESC
     LIMIT 1
   `);
-  return stmt.get() as BurnTransaction | undefined;
+  return result.rows[0] as unknown as BurnTransaction | undefined;
 }
 
-export function insertBurnTransaction(tx: BurnTransaction): void {
-  const database = getDb();
-  const stmt = database.prepare(`
-    INSERT OR IGNORE INTO burn_transactions
-    (tx_hash, block_number, timestamp, uni_amount, uni_price_usd, usd_value, from_address)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    tx.tx_hash,
-    tx.block_number,
-    tx.timestamp,
-    tx.uni_amount,
-    tx.uni_price_usd,
-    tx.usd_value,
-    tx.from_address
-  );
-}
-
-export function insertManyBurnTransactions(txs: BurnTransaction[]): void {
-  const database = getDb();
-  const stmt = database.prepare(`
-    INSERT OR IGNORE INTO burn_transactions
-    (tx_hash, block_number, timestamp, uni_amount, uni_price_usd, usd_value, from_address)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  const insertMany = database.transaction((transactions: BurnTransaction[]) => {
-    for (const tx of transactions) {
-      stmt.run(
-        tx.tx_hash,
-        tx.block_number,
-        tx.timestamp,
-        tx.uni_amount,
-        tx.uni_price_usd,
-        tx.usd_value,
-        tx.from_address
-      );
-    }
+export async function insertBurnTransaction(tx: BurnTransaction): Promise<void> {
+  await db.execute({
+    sql: `
+      INSERT OR IGNORE INTO burn_transactions
+      (tx_hash, block_number, timestamp, uni_amount, uni_price_usd, usd_value, from_address)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      tx.tx_hash,
+      tx.block_number,
+      tx.timestamp,
+      tx.uni_amount,
+      tx.uni_price_usd || null,
+      tx.usd_value || null,
+      tx.from_address
+    ]
   });
-
-  insertMany(txs);
 }
 
-export function getTotalBurned(): number {
-  const database = getDb();
-  const stmt = database.prepare(`
-    SELECT SUM(uni_amount) as total FROM burn_transactions
-    WHERE timestamp >= ?
-  `);
-  const result = stmt.get(CONSTANTS.START_DATE) as { total: number | null };
-  return result.total || 0;
+export async function insertManyBurnTransactions(txs: BurnTransaction[]): Promise<void> {
+  // @libsql/client supports batch transactions
+  const statements = txs.map(tx => ({
+    sql: `
+      INSERT OR IGNORE INTO burn_transactions
+      (tx_hash, block_number, timestamp, uni_amount, uni_price_usd, usd_value, from_address)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      tx.tx_hash,
+      tx.block_number,
+      tx.timestamp,
+      tx.uni_amount,
+      tx.uni_price_usd || null,
+      tx.usd_value || null,
+      tx.from_address
+    ]
+  }));
+
+  if (statements.length > 0) {
+    await db.batch(statements);
+  }
 }
 
-export function getTodayBurns(): number {
-  const database = getDb();
+export async function getTotalBurned(): Promise<number> {
+  const result = await db.execute({
+    sql: `
+      SELECT SUM(uni_amount) as total FROM burn_transactions
+      WHERE timestamp >= ?
+    `,
+    args: [CONSTANTS.START_DATE]
+  });
+  const row = result.rows[0] as unknown as { total: number | null };
+  return row?.total || 0;
+}
+
+export async function getTodayBurns(): Promise<number> {
   const today = new Date().toISOString().split('T')[0];
-  const stmt = database.prepare(`
-    SELECT SUM(uni_amount) as total FROM burn_transactions
-    WHERE date(timestamp) = ?
-  `);
-  const result = stmt.get(today) as { total: number | null };
-  return result.total || 0;
+  const result = await db.execute({
+    sql: `
+      SELECT SUM(uni_amount) as total FROM burn_transactions
+      WHERE date(timestamp) = ?
+    `,
+    args: [today]
+  });
+  const row = result.rows[0] as unknown as { total: number | null };
+  return row?.total || 0;
 }
 
-export function getHistoricalUsdValue(): number {
-  const database = getDb();
-  const stmt = database.prepare(`
-    SELECT SUM(usd_value) as total FROM burn_transactions
-    WHERE usd_value IS NOT NULL AND timestamp >= ?
-  `);
-  const result = stmt.get(CONSTANTS.START_DATE) as { total: number | null };
-  return result.total || 0;
+export async function getHistoricalUsdValue(): Promise<number> {
+  const result = await db.execute({
+    sql: `
+      SELECT SUM(usd_value) as total FROM burn_transactions
+      WHERE usd_value IS NOT NULL AND timestamp >= ?
+    `,
+    args: [CONSTANTS.START_DATE]
+  });
+  const row = result.rows[0] as unknown as { total: number | null };
+  return row?.total || 0;
 }
 
-export function getLatestDailyBurn(): DailyBurn | undefined {
-  const database = getDb();
-  const stmt = database.prepare(`
+export async function getLatestDailyBurn(): Promise<DailyBurn | undefined> {
+  const result = await db.execute(`
     SELECT * FROM daily_burns
     ORDER BY date DESC
     LIMIT 1
   `);
-  return stmt.get() as DailyBurn | undefined;
+  return result.rows[0] as unknown as DailyBurn | undefined;
 }
 
-export function clearAllData(): void {
-  const database = getDb();
-  database.exec(`
-    DELETE FROM daily_burns;
-    DELETE FROM burn_transactions;
-  `);
+export async function clearAllData(): Promise<void> {
+  await db.batch([
+    'DELETE FROM daily_burns',
+    'DELETE FROM burn_transactions'
+  ]);
 }

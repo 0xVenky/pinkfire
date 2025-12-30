@@ -1,6 +1,5 @@
 import { CONSTANTS } from './constants';
 import {
-  getDb,
   getDailyBurns,
   upsertDailyBurn,
   insertManyBurnTransactions,
@@ -44,7 +43,7 @@ export async function syncBurnData(): Promise<SyncResult> {
 
   try {
     // Get the latest transaction we have
-    const latestTx = getLatestBurnTransaction();
+    const latestTx = await getLatestBurnTransaction();
 
     // Fetch new transactions from BlockScout
     const newTransactions = await getUniTransfersToDeadAddress(
@@ -65,12 +64,14 @@ export async function syncBurnData(): Promise<SyncResult> {
       }
 
       // Store new transactions
-      insertManyBurnTransactions(newTransactions);
+      await insertManyBurnTransactions(newTransactions);
     }
 
     // Get all transactions and recalculate daily burns
     // Filter out transactions before start date
-    const allTransactions = getBurnTransactions().filter(
+    // Note: getBurnTransactions is now async
+    const burnTransactions = await getBurnTransactions();
+    const allTransactions = burnTransactions.filter(
       (tx) => tx.timestamp >= CONSTANTS.START_DATE
     );
     const groupedByDate = groupTransactionsByDate(allTransactions);
@@ -111,7 +112,7 @@ export async function syncBurnData(): Promise<SyncResult> {
         updated_at: now,
       };
 
-      upsertDailyBurn(dailyBurn);
+      await upsertDailyBurn(dailyBurn);
     }
 
     // If no transactions yet, check current balance as a fallback
@@ -160,7 +161,7 @@ export async function initialSync(): Promise<SyncResult> {
       }
     }
 
-    insertManyBurnTransactions(transactions);
+    await insertManyBurnTransactions(transactions);
   }
 
   // Now run normal sync to calculate daily burns

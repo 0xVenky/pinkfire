@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const dailyBurns = getDailyBurns();
+    const dailyBurns = await getDailyBurns();
 
     // Transform to chart data points
     const chartData: ChartDataPoint[] = dailyBurns.map((burn, index) => {
