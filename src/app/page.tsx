@@ -167,7 +167,15 @@ export default function Home() {
             since {CONSTANTS.START_DATE}
           </p>
           <p className="text-xs text-[#8B8B8B] mt-2">
-            Data refreshes every 5 minutes via BlockScout API
+            Data refreshes every 5 minutes via{' '}
+            <a
+              href="https://blockscout.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#FF007A] hover:underline"
+            >
+              BlockScout API
+            </a>
           </p>
         </div>
       </div>
