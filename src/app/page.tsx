@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Header, StatCard, BurnChart } from '@/components';
+import { Header, StatCard, BurnChart, Footer } from '@/components';
 import type { BurnSummary, ChartDataPoint } from '@/types';
 import { CONSTANTS } from '@/lib/constants';
 import { useState, useCallback } from 'react';
@@ -109,24 +109,24 @@ export default function Home() {
                 : '0 UNI'
             }
             subtitle={
-              summary?.current_uni_price
-                ? `@ ${formatUSD(summary.current_uni_price)}/UNI`
+              summary?.historical_usd_value
+                ? `USD Value at burn: ${formatUSD(summary.historical_usd_value)}`
                 : undefined
             }
             isLoading={isLoading}
             highlight
           />
           <StatCard
-            title="Current USD Value"
+            title="Current UNI Price"
             value={
-              summary?.current_usd_value
-                ? formatUSD(summary.current_usd_value)
-                : '$0'
-            }
-            subtitle={
-              summary?.historical_usd_value
-                ? `Historical: ${formatUSD(summary.historical_usd_value)}`
-                : undefined
+              summary?.current_uni_price
+                ? new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(summary.current_uni_price)
+                : '$0.00'
             }
             isLoading={isLoading}
           />
@@ -146,40 +146,7 @@ export default function Home() {
         <BurnChart data={chartData} isLoading={isDailyLoading} />
 
         {/* Footer Info */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-[#8B8B8B]">
-            Tracking burns to{' '}
-            <a
-              href={`https://etherscan.io/token/0x1f9840a85d5af5bf1d1762f925bdaddc4201f984?a${CONSTANTS.DEAD_ADDRESS}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FF007A] hover:underline"
-            >
-              {CONSTANTS.DEAD_ADDRESS.slice(0, 6)}...
-              {CONSTANTS.DEAD_ADDRESS.slice(-4)}
-            </a>{' '}
-            since {CONSTANTS.START_DATE}. This does not include{' '}
-            <a
-              href="https://etherscan.io/tx/0x091f0083242a777d55821c1189e568d6d033d9da501b75087dc736fa143d2c1e"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FF007A] hover:underline"
-            >
-              100M UNI one time burn
-            </a>.
-          </p>
-          <p className="text-xs text-[#8B8B8B] mt-2">
-            Data refreshes every 5 minutes via{' '}
-            <a
-              href="https://blockscout.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FF007A] hover:underline"
-            >
-              BlockScout API
-            </a>
-          </p>
-        </div>
+        <Footer />
       </div>
     </main>
   );
