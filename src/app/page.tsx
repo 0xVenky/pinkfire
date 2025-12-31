@@ -109,24 +109,24 @@ export default function Home() {
                 : '0 UNI'
             }
             subtitle={
-              summary?.current_uni_price
-                ? `@ ${formatUSD(summary.current_uni_price)}/UNI`
+              summary?.historical_usd_value
+                ? `USD Value at burn: ${formatUSD(summary.historical_usd_value)}`
                 : undefined
             }
             isLoading={isLoading}
             highlight
           />
           <StatCard
-            title="Current USD Value"
+            title="Current UNI Price"
             value={
-              summary?.current_usd_value
-                ? formatUSD(summary.current_usd_value)
-                : '$0'
-            }
-            subtitle={
-              summary?.historical_usd_value
-                ? `Historical: ${formatUSD(summary.historical_usd_value)}`
-                : undefined
+              summary?.current_uni_price
+                ? new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(summary.current_uni_price)
+                : '$0.00'
             }
             isLoading={isLoading}
           />
