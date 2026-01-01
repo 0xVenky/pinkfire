@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   Area,
   ComposedChart,
+  Bar,
 } from 'recharts';
 import type { ChartDataPoint } from '@/types';
 import { THEME } from '@/lib/constants';
@@ -84,6 +85,7 @@ function CustomTooltip({ active, payload, showUsd }: CustomTooltipProps) {
 
 export function BurnChart({ data, isLoading = false }: BurnChartProps) {
   const [showUsd, setShowUsd] = useState(false);
+  const [viewMode, setViewMode] = useState<'cumulative' | 'daily'>('cumulative');
 
   if (isLoading) {
     return (
@@ -114,107 +116,176 @@ export function BurnChart({ data, isLoading = false }: BurnChartProps) {
   }
 
   const maxValue = Math.max(...data.map((d) => d.cumulative_uni));
+  const maxDailyValue = Math.max(...data.map((d) => d.daily_uni), 10); // Ensure at least some height
+
   const yDomain = [0, Math.ceil(maxValue * 1.1)];
+  const dailyYDomain = [0, Math.ceil(maxDailyValue * 1.1)];
 
   return (
     <div className="bg-[#191919] rounded-xl p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-lg font-semibold text-white">Daily Burn History</h2>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showUsd}
-            onChange={(e) => setShowUsd(e.target.checked)}
-            className="w-4 h-4 rounded border-[#2D2D2D] bg-[#191919] text-[#FF007A] focus:ring-[#FF007A] focus:ring-offset-0"
-          />
-          <span className="text-sm text-[#8B8B8B]">Show USD Value</span>
-        </label>
+
+        <div className="flex items-center gap-4">
+          {/* Switcher */}
+          <div className="flex bg-[#0D0D0D] p-1 rounded-lg border border-[#2D2D2D]">
+            <button
+              onClick={() => setViewMode('cumulative')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${viewMode === 'cumulative'
+                ? 'bg-[#2D2D2D] text-white'
+                : 'text-[#8B8B8B] hover:text-white'
+                }`}
+            >
+              Cumulative
+            </button>
+            <button
+              onClick={() => setViewMode('daily')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${viewMode === 'daily'
+                ? 'bg-[#2D2D2D] text-white'
+                : 'text-[#8B8B8B] hover:text-white'
+                }`}
+            >
+              Daily
+            </button>
+          </div>
+
+          {viewMode === 'cumulative' && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showUsd}
+                onChange={(e) => setShowUsd(e.target.checked)}
+                className="w-4 h-4 rounded border-[#2D2D2D] bg-[#191919] text-[#FF007A] focus:ring-[#FF007A] focus:ring-offset-0"
+              />
+              <span className="text-sm text-[#8B8B8B]">Show USD Value</span>
+            </label>
+          )}
+        </div>
       </div>
 
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-            <defs>
-              <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={THEME.primary} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={THEME.primary} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={THEME.border}
-              vertical={false}
-            />
-            <XAxis
-              dataKey="displayDate"
-              stroke={THEME.textSecondary}
-              tick={{ fill: THEME.textSecondary, fontSize: 12 }}
-              axisLine={{ stroke: THEME.border }}
-              tickLine={{ stroke: THEME.border }}
-            />
-            <YAxis
-              stroke={THEME.textSecondary}
-              tick={{ fill: THEME.textSecondary, fontSize: 12 }}
-              axisLine={{ stroke: THEME.border }}
-              tickLine={{ stroke: THEME.border }}
-              domain={yDomain}
-              tickFormatter={(value) =>
-                value >= 1000000
-                  ? `${(value / 1000000).toFixed(1)}M`
-                  : value >= 1000
-                    ? `${(value / 1000).toFixed(1)}K`
-                    : value.toString()
-              }
-            />
-            {showUsd && (
-              <YAxis
-                yAxisId="usd"
-                orientation="right"
-                stroke={THEME.success}
-                tick={{ fill: THEME.success, fontSize: 12 }}
+          {viewMode === 'cumulative' ? (
+            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+              <defs>
+                <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={THEME.primary} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={THEME.primary} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={THEME.border}
+                vertical={false}
+              />
+              <XAxis
+                dataKey="displayDate"
+                stroke={THEME.textSecondary}
+                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
                 axisLine={{ stroke: THEME.border }}
                 tickLine={{ stroke: THEME.border }}
+              />
+              <YAxis
+                stroke={THEME.textSecondary}
+                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
+                axisLine={{ stroke: THEME.border }}
+                tickLine={{ stroke: THEME.border }}
+                domain={yDomain}
                 tickFormatter={(value) =>
                   value >= 1000000
-                    ? `$${(value / 1000000).toFixed(1)}M`
+                    ? `${(value / 1000000).toFixed(1)}M`
                     : value >= 1000
-                      ? `$${(value / 1000).toFixed(1)}K`
-                      : `$${value}`
+                      ? `${(value / 1000).toFixed(1)}K`
+                      : value.toString()
                 }
               />
-            )}
-            <Tooltip content={<CustomTooltip showUsd={showUsd} />} />
-            <Area
-              type="monotone"
-              dataKey="cumulative_uni"
-              stroke="transparent"
-              fill="url(#burnGradient)"
-            />
-            <Line
-              type="monotone"
-              dataKey="cumulative_uni"
-              stroke={THEME.chartLine}
-              strokeWidth={3}
-              dot={false}
-              activeDot={{
-                r: 6,
-                fill: THEME.primary,
-                stroke: THEME.background,
-                strokeWidth: 2,
-              }}
-            />
-            {showUsd && (
+              {showUsd && (
+                <YAxis
+                  yAxisId="usd"
+                  orientation="right"
+                  stroke={THEME.success}
+                  tick={{ fill: THEME.success, fontSize: 12 }}
+                  axisLine={{ stroke: THEME.border }}
+                  tickLine={{ stroke: THEME.border }}
+                  tickFormatter={(value) =>
+                    value >= 1000000
+                      ? `$${(value / 1000000).toFixed(1)}M`
+                      : value >= 1000
+                        ? `$${(value / 1000).toFixed(1)}K`
+                        : `$${value}`
+                  }
+                />
+              )}
+              <Tooltip content={<CustomTooltip showUsd={showUsd} />} />
+              <Area
+                type="monotone"
+                dataKey="cumulative_uni"
+                stroke="transparent"
+                fill="url(#burnGradient)"
+              />
               <Line
                 type="monotone"
-                dataKey="usd_value"
-                yAxisId="usd"
-                stroke={THEME.success}
-                strokeWidth={2}
-                strokeDasharray="5 5"
+                dataKey="cumulative_uni"
+                stroke={THEME.chartLine}
+                strokeWidth={3}
                 dot={false}
+                activeDot={{
+                  r: 6,
+                  fill: THEME.primary,
+                  stroke: THEME.background,
+                  strokeWidth: 2,
+                }}
               />
-            )}
-          </ComposedChart>
+              {showUsd && (
+                <Line
+                  type="monotone"
+                  dataKey="usd_value"
+                  yAxisId="usd"
+                  stroke={THEME.success}
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                />
+              )}
+            </ComposedChart>
+          ) : (
+            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={THEME.border}
+                vertical={false}
+              />
+              <XAxis
+                dataKey="displayDate"
+                stroke={THEME.textSecondary}
+                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
+                axisLine={{ stroke: THEME.border }}
+                tickLine={{ stroke: THEME.border }}
+              />
+              <YAxis
+                stroke={THEME.textSecondary}
+                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
+                axisLine={{ stroke: THEME.border }}
+                tickLine={{ stroke: THEME.border }}
+                domain={dailyYDomain}
+                tickFormatter={(value) =>
+                  value >= 1000000
+                    ? `${(value / 1000000).toFixed(1)}M`
+                    : value >= 1000
+                      ? `${(value / 1000).toFixed(1)}K`
+                      : value.toString()
+                }
+              />
+              <Tooltip content={<CustomTooltip showUsd={false} />} cursor={{ fill: 'transparent' }} />
+              <Bar
+                dataKey="daily_uni"
+                name="Daily Burned"
+                fill={THEME.primary}
+                radius={[4, 4, 0, 0]}
+                barSize={20}
+              />
+            </ComposedChart>
+          )}
         </ResponsiveContainer>
       </div>
     </div>

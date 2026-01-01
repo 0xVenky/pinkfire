@@ -86,8 +86,8 @@ export function UnvestingChart({ data }: UnvestingChartProps) {
                     <button
                         onClick={() => setViewMode('cumulative')}
                         className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${viewMode === 'cumulative'
-                                ? 'bg-[#2D2D2D] text-white'
-                                : 'text-[#8B8B8B] hover:text-white'
+                            ? 'bg-[#2D2D2D] text-white'
+                            : 'text-[#8B8B8B] hover:text-white'
                             }`}
                     >
                         Cumulative
@@ -95,8 +95,8 @@ export function UnvestingChart({ data }: UnvestingChartProps) {
                     <button
                         onClick={() => setViewMode('daily')}
                         className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${viewMode === 'daily'
-                                ? 'bg-[#2D2D2D] text-white'
-                                : 'text-[#8B8B8B] hover:text-white'
+                            ? 'bg-[#2D2D2D] text-white'
+                            : 'text-[#8B8B8B] hover:text-white'
                             }`}
                     >
                         Daily
