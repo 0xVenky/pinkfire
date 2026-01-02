@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { THEME } from '@/lib/constants';
 import { ChartDataPoint } from '@/types';
+import { useEffect } from 'react';
 
 interface UnvestingChartProps {
     data: ChartDataPoint[];
@@ -20,9 +21,14 @@ interface UnvestingChartProps {
 
 export function UnvestingChart({ data }: UnvestingChartProps) {
     const [viewMode, setViewMode] = useState<'cumulative' | 'daily'>('cumulative');
+    const [isMounted, setIsMounted] = useState(false);
     const TARGET_ANNUAL_EMISSION = 20_000_000;
     const DAILY_EMISSION = TARGET_ANNUAL_EMISSION / 365;
     const EMISSION_START_DATE = '2026-01-01';
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Process data to add emission values
     const processedData = data.map((point) => {
@@ -108,75 +114,81 @@ export function UnvestingChart({ data }: UnvestingChartProps) {
                 This chart represents daily unvesting data with daily burns. Burns start from 29 Dec, while unvesting starts from Jan 1, 2026.
             </p>
             <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    {viewMode === 'cumulative' ? (
-                        <AreaChart data={processedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={THEME.primary} stopOpacity={0.4} />
-                                    <stop offset="95%" stopColor={THEME.primary} stopOpacity={0.1} />
-                                </linearGradient>
-                                <linearGradient id="colorEmission" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#4A4A4A" stopOpacity={0.4} />
-                                    <stop offset="95%" stopColor="#4A4A4A" stopOpacity={0.1} />
-                                </linearGradient>
-                            </defs>
-                            <XAxis
-                                dataKey="displayDate"
-                                stroke="#333"
-                                tick={{ fill: '#666', fontSize: 12 }}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <YAxis hide />
-                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#333', strokeWidth: 1 }} />
-                            <Area
-                                type="monotone"
-                                dataKey="emission"
-                                stroke="#8B8B8B"
-                                fill="url(#colorEmission)"
-                                name="Accumulated Emission"
-                                strokeWidth={2}
-                                fillOpacity={1}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="cumulative_uni"
-                                stroke={THEME.primary}
-                                fill="url(#colorBurn)"
-                                name="Total Burned"
-                                strokeWidth={2}
-                                fillOpacity={1}
-                            />
-                        </AreaChart>
-                    ) : (
-                        <BarChart data={processedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                            <XAxis
-                                dataKey="displayDate"
-                                stroke="#333"
-                                tick={{ fill: '#666', fontSize: 12 }}
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <YAxis hide />
-                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                            <Bar
-                                dataKey="daily_emission"
-                                name="Daily Emission"
-                                fill="#2D2D2D"
-                                radius={[4, 4, 0, 0]}
-                                barSize={20}
-                            />
-                            <Bar
-                                dataKey="daily_uni"
-                                name="Daily Burned"
-                                fill={THEME.primary}
-                                radius={[4, 4, 0, 0]}
-                                barSize={20}
-                            />
-                        </BarChart>
-                    )}
-                </ResponsiveContainer>
+                {isMounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        {viewMode === 'cumulative' ? (
+                            <AreaChart data={processedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={THEME.primary} stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor={THEME.primary} stopOpacity={0.1} />
+                                    </linearGradient>
+                                    <linearGradient id="colorEmission" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#4A4A4A" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="#4A4A4A" stopOpacity={0.1} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis
+                                    dataKey="displayDate"
+                                    stroke="#333"
+                                    tick={{ fill: '#666', fontSize: 12 }}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis hide />
+                                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#333', strokeWidth: 1 }} />
+                                <Area
+                                    type="monotone"
+                                    dataKey="emission"
+                                    stroke="#8B8B8B"
+                                    fill="url(#colorEmission)"
+                                    name="Accumulated Emission"
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="cumulative_uni"
+                                    stroke={THEME.primary}
+                                    fill="url(#colorBurn)"
+                                    name="Total Burned"
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                />
+                            </AreaChart>
+                        ) : (
+                            <BarChart data={processedData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                                <XAxis
+                                    dataKey="displayDate"
+                                    stroke="#333"
+                                    tick={{ fill: '#666', fontSize: 12 }}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis hide />
+                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                                <Bar
+                                    dataKey="daily_emission"
+                                    name="Daily Emission"
+                                    fill="#2D2D2D"
+                                    radius={[4, 4, 0, 0]}
+                                    barSize={20}
+                                />
+                                <Bar
+                                    dataKey="daily_uni"
+                                    name="Daily Burned"
+                                    fill={THEME.primary}
+                                    radius={[4, 4, 0, 0]}
+                                    barSize={20}
+                                />
+                            </BarChart>
+                        )}
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <div className="animate-pulse bg-[#2D2D2D] rounded-lg w-full h-full opacity-20"></div>
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center justify-center gap-6 text-xs text-[#8B8B8B] mt-4">

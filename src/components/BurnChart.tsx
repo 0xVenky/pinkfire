@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -86,6 +86,11 @@ function CustomTooltip({ active, payload, showUsd }: CustomTooltipProps) {
 export function BurnChart({ data, isLoading = false }: BurnChartProps) {
   const [showUsd, setShowUsd] = useState(false);
   const [viewMode, setViewMode] = useState<'cumulative' | 'daily'>('daily');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (isLoading) {
     return (
@@ -164,129 +169,135 @@ export function BurnChart({ data, isLoading = false }: BurnChartProps) {
       </div>
 
       <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          {viewMode === 'cumulative' ? (
-            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-              <defs>
-                <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={THEME.primary} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={THEME.primary} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={THEME.border}
-                vertical={false}
-              />
-              <XAxis
-                dataKey="displayDate"
-                stroke={THEME.textSecondary}
-                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
-                axisLine={{ stroke: THEME.border }}
-                tickLine={{ stroke: THEME.border }}
-              />
-              <YAxis
-                stroke={THEME.textSecondary}
-                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
-                axisLine={{ stroke: THEME.border }}
-                tickLine={{ stroke: THEME.border }}
-                domain={yDomain}
-                tickFormatter={(value) =>
-                  value >= 1000000
-                    ? `${(value / 1000000).toFixed(1)}M`
-                    : value >= 1000
-                      ? `${(value / 1000).toFixed(1)}K`
-                      : value.toString()
-                }
-              />
-              {showUsd && (
-                <YAxis
-                  yAxisId="usd"
-                  orientation="right"
-                  stroke={THEME.success}
-                  tick={{ fill: THEME.success, fontSize: 12 }}
+        {isMounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            {viewMode === 'cumulative' ? (
+              <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                <defs>
+                  <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={THEME.primary} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={THEME.primary} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={THEME.border}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="displayDate"
+                  stroke={THEME.textSecondary}
+                  tick={{ fill: THEME.textSecondary, fontSize: 12 }}
                   axisLine={{ stroke: THEME.border }}
                   tickLine={{ stroke: THEME.border }}
+                />
+                <YAxis
+                  stroke={THEME.textSecondary}
+                  tick={{ fill: THEME.textSecondary, fontSize: 12 }}
+                  axisLine={{ stroke: THEME.border }}
+                  tickLine={{ stroke: THEME.border }}
+                  domain={yDomain}
                   tickFormatter={(value) =>
                     value >= 1000000
-                      ? `$${(value / 1000000).toFixed(1)}M`
+                      ? `${(value / 1000000).toFixed(1)}M`
                       : value >= 1000
-                        ? `$${(value / 1000).toFixed(1)}K`
-                        : `$${value}`
+                        ? `${(value / 1000).toFixed(1)}K`
+                        : value.toString()
                   }
                 />
-              )}
-              <Tooltip content={<CustomTooltip showUsd={showUsd} />} />
-              <Area
-                type="monotone"
-                dataKey="cumulative_uni"
-                stroke="transparent"
-                fill="url(#burnGradient)"
-              />
-              <Line
-                type="monotone"
-                dataKey="cumulative_uni"
-                stroke={THEME.chartLine}
-                strokeWidth={3}
-                dot={false}
-                activeDot={{
-                  r: 6,
-                  fill: THEME.primary,
-                  stroke: THEME.background,
-                  strokeWidth: 2,
-                }}
-              />
-              {showUsd && (
+                {showUsd && (
+                  <YAxis
+                    yAxisId="usd"
+                    orientation="right"
+                    stroke={THEME.success}
+                    tick={{ fill: THEME.success, fontSize: 12 }}
+                    axisLine={{ stroke: THEME.border }}
+                    tickLine={{ stroke: THEME.border }}
+                    tickFormatter={(value) =>
+                      value >= 1000000
+                        ? `$${(value / 1000000).toFixed(1)}M`
+                        : value >= 1000
+                          ? `$${(value / 1000).toFixed(1)}K`
+                          : `$${value}`
+                    }
+                  />
+                )}
+                <Tooltip content={<CustomTooltip showUsd={showUsd} />} />
+                <Area
+                  type="monotone"
+                  dataKey="cumulative_uni"
+                  stroke="transparent"
+                  fill="url(#burnGradient)"
+                />
                 <Line
                   type="monotone"
-                  dataKey="usd_value"
-                  yAxisId="usd"
-                  stroke={THEME.success}
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
+                  dataKey="cumulative_uni"
+                  stroke={THEME.chartLine}
+                  strokeWidth={3}
                   dot={false}
+                  activeDot={{
+                    r: 6,
+                    fill: THEME.primary,
+                    stroke: THEME.background,
+                    strokeWidth: 2,
+                  }}
                 />
-              )}
-            </ComposedChart>
-          ) : (
-            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={THEME.border}
-                vertical={false}
-              />
-              <XAxis
-                dataKey="displayDate"
-                stroke={THEME.textSecondary}
-                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
-                axisLine={{ stroke: THEME.border }}
-                tickLine={{ stroke: THEME.border }}
-              />
-              <YAxis
-                stroke={THEME.textSecondary}
-                tick={{ fill: THEME.textSecondary, fontSize: 12 }}
-                axisLine={{ stroke: THEME.border }}
-                tickLine={{ stroke: THEME.border }}
-                domain={dailyYDomain}
-                tickFormatter={(value) =>
-                  value >= 1000000
-                    ? `${(value / 1000000).toFixed(1)}M`
-                    : value >= 1000
-                      ? `${(value / 1000).toFixed(1)}K`
-                      : value.toString()
-                }
-              />
-              <Tooltip content={<CustomTooltip showUsd={false} />} cursor={{ fill: 'transparent' }} />
-              <Bar
-                dataKey="daily_uni"
-                name="Daily Burned"
-                fill={THEME.primary}
-                radius={[4, 4, 0, 0]}
-                barSize={20}
-              />
-            </ComposedChart>
-          )}
-        </ResponsiveContainer>
+                {showUsd && (
+                  <Line
+                    type="monotone"
+                    dataKey="usd_value"
+                    yAxisId="usd"
+                    stroke={THEME.success}
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
+                )}
+              </ComposedChart>
+            ) : (
+              <ComposedChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={THEME.border}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="displayDate"
+                  stroke={THEME.textSecondary}
+                  tick={{ fill: THEME.textSecondary, fontSize: 12 }}
+                  axisLine={{ stroke: THEME.border }}
+                  tickLine={{ stroke: THEME.border }}
+                />
+                <YAxis
+                  stroke={THEME.textSecondary}
+                  tick={{ fill: THEME.textSecondary, fontSize: 12 }}
+                  axisLine={{ stroke: THEME.border }}
+                  tickLine={{ stroke: THEME.border }}
+                  domain={dailyYDomain}
+                  tickFormatter={(value) =>
+                    value >= 1000000
+                      ? `${(value / 1000000).toFixed(1)}M`
+                      : value >= 1000
+                        ? `${(value / 1000).toFixed(1)}K`
+                        : value.toString()
+                  }
+                />
+                <Tooltip content={<CustomTooltip showUsd={false} />} cursor={{ fill: 'transparent' }} />
+                <Bar
+                  dataKey="daily_uni"
+                  name="Daily Burned"
+                  fill={THEME.primary}
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
+                />
+              </ComposedChart>
+            )}
+          </ResponsiveContainer>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="animate-pulse bg-[#2D2D2D] rounded-lg w-full h-full opacity-20"></div>
+          </div>
+        )}
       </div>
     </div>
   );

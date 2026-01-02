@@ -63,6 +63,20 @@ export async function getBurnTransactions(): Promise<BurnTransaction[]> {
   return result.rows as unknown as BurnTransaction[];
 }
 
+
+export async function getRecentBurnTransactions(limit: number = 5): Promise<BurnTransaction[]> {
+  const result = await db.execute({
+    sql: `
+      SELECT * FROM burn_transactions
+      ORDER BY timestamp DESC
+      LIMIT ?
+    `,
+    args: [limit]
+  });
+  return result.rows as unknown as BurnTransaction[];
+}
+
+
 export async function getLatestBurnTransaction(): Promise<BurnTransaction | undefined> {
   const result = await db.execute(`
     SELECT * FROM burn_transactions
