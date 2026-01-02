@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import {
     BarChart,
     Bar,
@@ -20,6 +22,11 @@ interface InflationChartProps {
 export function InflationChart({ currentBurn }: InflationChartProps) {
     const TARGET_BURN = 20_000_000;
     const isDeflationary = currentBurn >= TARGET_BURN;
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // For the progress bar:
     // If not deflationary:
@@ -96,18 +103,24 @@ export function InflationChart({ currentBurn }: InflationChartProps) {
             </div>
 
             <div className="h-[120px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        layout="vertical"
-                        data={data}
-                    >
-                        <XAxis type="number" hide domain={[0, Math.max(TARGET_BURN, currentBurn)]} />
-                        <YAxis type="category" dataKey="name" hide />
-                        <Tooltip content={<CustomTooltip />} cursor={false} />
-                        <Bar dataKey="burned" stackId="a" fill={isDeflationary ? "#27AE60" : THEME.primary} radius={isDeflationary ? [4, 4, 4, 4] : [4, 0, 0, 4]} barSize={40} />
-                        <Bar dataKey="remaining" stackId="a" fill="#333333" radius={[0, 4, 4, 0]} barSize={40} />
-                    </BarChart>
-                </ResponsiveContainer>
+                {isMounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            layout="vertical"
+                            data={data}
+                        >
+                            <XAxis type="number" hide domain={[0, Math.max(TARGET_BURN, currentBurn)]} />
+                            <YAxis type="category" dataKey="name" hide />
+                            <Tooltip content={<CustomTooltip />} cursor={false} />
+                            <Bar dataKey="burned" stackId="a" fill={isDeflationary ? "#27AE60" : THEME.primary} radius={isDeflationary ? [4, 4, 4, 4] : [4, 0, 0, 4]} barSize={40} />
+                            <Bar dataKey="remaining" stackId="a" fill="#333333" radius={[0, 4, 4, 0]} barSize={40} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <div className="animate-pulse bg-[#2D2D2D] rounded-lg w-full h-full opacity-20"></div>
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center justify-center gap-6 text-xs text-[#8B8B8B] -mt-2">
