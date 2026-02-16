@@ -13,6 +13,152 @@ interface PriceChangeIndicatorProps {
   size?: 'sm' | 'md';
 }
 
+// Memoized arrow icon component
+const ArrowIcon = React.memo(
+  ({ isPositive, isNeutral }: { isPositive: boolean; isNeutral: boolean }) => {
+    if (isNeutral) {
+      return (
+        <svg
+          className="w-5 h-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      );
+    }
+
+    return (
+      <svg
+        className={`w-5 h-5 transition-transform duration-300 ${
+          isPositive ? '' : 'rotate-180'
+        }`}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    );
+  }
+);
+ArrowIcon.displayName = 'ArrowIcon';
+
+// Memoized trend line component
+const TrendLine = React.memo(
+  ({ isPositive, isNeutral }: { isPositive: boolean; isNeutral: boolean }) => {
+    if (isPositive) {
+      return (
+        <svg
+          className="w-12 h-8 text-pinkfire-green"
+          viewBox="0 0 48 32"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="2,28 12,20 20,24 28,14 36,10 46,4"></polyline>
+        </svg>
+      );
+    }
+    if (isNeutral) {
+      return (
+        <svg
+          className="w-12 h-8 text-gray-400"
+          viewBox="0 0 48 32"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="2,16 12,15 20,17 28,16 36,15 46,16"></polyline>
+        </svg>
+      );
+    }
+    return (
+      <svg
+        className="w-12 h-8 text-pinkfire-red"
+        viewBox="0 0 48 32"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="2,4 12,12 20,8 28,18 36,22 46,28"></polyline>
+      </svg>
+    );
+  }
+);
+TrendLine.displayName = 'TrendLine';
+
+// Memoized compact arrow icon
+const CompactArrowIcon = React.memo(
+  ({ isPositive, isNeutral }: { isPositive: boolean; isNeutral: boolean }) => (
+    <svg
+      className={`w-4 h-4 transition-transform duration-300 ${
+        !isPositive && !isNeutral ? 'rotate-180' : ''
+      }`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {isNeutral ? (
+        <line x1="5" y1="12" x2="19" y2="12" />
+      ) : (
+        <polyline points="18 15 12 9 6 15"></polyline>
+      )}
+    </svg>
+  )
+);
+CompactArrowIcon.displayName = 'CompactArrowIcon';
+
+// Memoized badge icon
+const BadgeIcon = React.memo(
+  ({
+    isPositive,
+    isNeutral,
+    size,
+  }: {
+    isPositive: boolean;
+    isNeutral: boolean;
+    size: 'sm' | 'md';
+  }) => (
+    <svg
+      className={`transition-transform duration-300 ${
+        size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'
+      } ${
+        !isPositive && !isNeutral ? 'rotate-180' : ''
+      }`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {isNeutral ? (
+        <line x1="5" y1="12" x2="19" y2="12" />
+      ) : (
+        <polyline points="18 15 12 9 6 15"></polyline>
+      )}
+    </svg>
+  )
+);
+BadgeIcon.displayName = 'BadgeIcon';
+
 /**
  * PriceChangeIndicator Component
  * Displays the 24-hour price change with visual indicators (arrow/trend line)
@@ -41,61 +187,11 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
       ? 'bg-gray-700/30 border-gray-600/30'
       : 'bg-pinkfire-red/10 border-pinkfire-red/30';
 
-  // Arrow Icon Component
-  const ArrowIcon = () => {
-    if (isNeutral) {
-      return (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      );
-    }
-
-    return (
-      <svg
-        className={`w-5 h-5 transition-transform duration-300 ${
-          isPositive ? '' : 'rotate-180'
-        }`}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="18 15 12 9 6 15"></polyline>
-      </svg>
-    );
-  };
-
-  // Trend Line SVG Component
-  const TrendLine = () => {
-    if (isPositive) {
-      return (
-        <svg className="w-12 h-8 text-pinkfire-green" viewBox="0 0 48 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="2,28 12,20 20,24 28,14 36,10 46,4"></polyline>
-        </svg>
-      );
-    }
-    if (isNeutral) {
-      return (
-        <svg className="w-12 h-8 text-gray-400" viewBox="0 0 48 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="2,16 12,15 20,17 28,16 36,15 46,16"></polyline>
-        </svg>
-      );
-    }
-    return (
-      <svg className="w-12 h-8 text-pinkfire-red" viewBox="0 0 48 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="2,4 12,12 20,8 28,18 36,22 46,28"></polyline>
-      </svg>
-    );
-  };
-
   // Default variant: arrow + percentage
   if (variant === 'default') {
     return (
       <div className={`flex items-center gap-1.5 transition-all duration-300 ${colorClasses}`}>
-        <ArrowIcon />
+        <ArrowIcon isPositive={isPositive} isNeutral={isNeutral} />
         <span className="text-xl font-semibold">{absPercentage}%</span>
       </div>
     );
@@ -105,23 +201,7 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
   if (variant === 'compact') {
     return (
       <div className={`flex items-center gap-1 ${colorClasses}`}>
-        <svg
-          className={`w-4 h-4 transition-transform duration-300 ${
-            !isPositive && !isNeutral ? 'rotate-180' : ''
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {isNeutral ? (
-            <line x1="5" y1="12" x2="19" y2="12" />
-          ) : (
-            <polyline points="18 15 12 9 6 15"></polyline>
-          )}
-        </svg>
+        <CompactArrowIcon isPositive={isPositive} isNeutral={isNeutral} />
         <span className="text-sm font-semibold">{absPercentage}%</span>
       </div>
     );
@@ -131,29 +211,15 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
   if (variant === 'badge') {
     const sizeClasses = size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5';
     return (
-      <div className={`inline-flex items-center gap-1.5 border rounded-full transition-all duration-300 ${sizeClasses} ${bgColorClasses} ${colorClasses}`}>
-        <svg
-          className={`transition-transform duration-300 ${
-            size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'
-          } ${
-            !isPositive && !isNeutral ? 'rotate-180' : ''
+      <div
+        className={`inline-flex items-center gap-1.5 border rounded-full transition-all duration-300 ${sizeClasses} ${bgColorClasses} ${colorClasses}`}
+      >
+        <BadgeIcon isPositive={isPositive} isNeutral={isNeutral} size={size} />
+        <span
+          className={`font-semibold ${
+            size === 'sm' ? 'text-xs' : 'text-sm'
           }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
         >
-          {isNeutral ? (
-            <line x1="5" y1="12" x2="19" y2="12" />
-          ) : (
-            <polyline points="18 15 12 9 6 15"></polyline>
-          )}
-        </svg>
-        <span className={`font-semibold ${
-          size === 'sm' ? 'text-xs' : 'text-sm'
-        }`}>
           {absPercentage}%
         </span>
       </div>
@@ -164,7 +230,7 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
   if (variant === 'trend-line') {
     return (
       <div className="flex items-center gap-3">
-        <TrendLine />
+        <TrendLine isPositive={isPositive} isNeutral={isNeutral} />
         <div>
           {currentPrice && (
             <p className="text-white font-semibold">${currentPrice.toFixed(2)}</p>

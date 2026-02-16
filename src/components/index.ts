@@ -6,5 +6,5 @@ export { InflationChart } from './InflationChart';
 export { UnvestingChart } from './UnvestingChart';
 export { RefreshIndicator } from './RefreshIndicator';
 export { Providers } from './Providers';
-export { PriceChangeIndicator } from './PriceChangeIndicator';
 export { PriceCard } from './PriceCard';
+export { PriceChangeIndicator } from './PriceChangeIndicator';

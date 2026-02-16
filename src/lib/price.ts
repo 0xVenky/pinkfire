@@ -2,11 +2,24 @@ import { CONSTANTS } from './constants';
 
 const UNI_COIN_ID = 'uniswap';
 const COINGECKO_API_BASE = CONSTANTS.COINGECKO_API_URL || 'https://api.coingecko.com/api/v3';
+const FETCH_TIMEOUT = 10000; // 10 seconds
 
 // In-memory cache for price data with request deduplication
 const priceCache = new Map<string, { data: number; timestamp: number }>();
 const priceRequests = new Map<string, Promise<number>>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Wrapper for fetch with timeout
+ */
+function fetchWithTimeout(url: string, timeout: number = FETCH_TIMEOUT): Promise<Response> {
+  return Promise.race([
+    fetch(url),
+    new Promise<Response>((_, reject) =>
+      setTimeout(() => reject(new Error('Fetch timeout')), timeout)
+    ),
+  ]);
+}
 
 /**
  * Get current UNI price from CoinGecko with caching and request deduplication
@@ -26,7 +39,7 @@ export async function getCurrentUniPrice(): Promise<number> {
 
   const promise = (async () => {
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${COINGECKO_API_BASE}/simple/price?ids=${UNI_COIN_ID}&vs_currencies=usd`
       );
 
@@ -55,6 +68,7 @@ export async function getCurrentUniPrice(): Promise<number> {
 /**
  * Get UNI price as of a specific date from CoinGecko
  * @param date Date in format 'dd-mm-yyyy' or as Date object
+ * @returns Historical price or throws error if unavailable
  */
 export async function getHistoricalUniPrice(date: string | Date): Promise<number> {
   const dateString = date instanceof Date ? formatDateForCoinGecko(date) : date;
@@ -72,7 +86,7 @@ export async function getHistoricalUniPrice(date: string | Date): Promise<number
 
   const promise = (async () => {
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${COINGECKO_API_BASE}/coins/${UNI_COIN_ID}/history?date=${dateString}&localization=false`
       );
 
@@ -116,7 +130,7 @@ export async function get24hPriceChange(): Promise<number> {
 
   const promise = (async () => {
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${COINGECKO_API_BASE}/simple/price?ids=${UNI_COIN_ID}&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24h_change=true`
       );
 
@@ -143,7 +157,8 @@ export async function get24hPriceChange(): Promise<number> {
 }
 
 /**
- * Calculate price 24 hours ago
+ * Calculate price 24 hours ago and percentage change
+ * Throws an error if price data cannot be fetched or is invalid
  */
 export async function getPriceChangeData(): Promise<{
   currentPrice: number;

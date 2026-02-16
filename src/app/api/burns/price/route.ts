@@ -22,12 +22,25 @@ export async function GET(_request: NextRequest) {
     );
   } catch (error) {
     console.error('Error fetching price data:', error);
+
+    // Distinguish between API timeouts/service unavailable and other errors
+    const isServiceUnavailable =
+      error instanceof Error &&
+      (error.message.includes('Fetch timeout') ||
+        error.message.includes('503') ||
+        error.message.includes('429'));
+
+    const status = isServiceUnavailable ? 503 : 500;
+    const errorMessage = isServiceUnavailable
+      ? 'Price service temporarily unavailable'
+      : 'Failed to fetch price data';
+
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to fetch price data',
+        error: errorMessage,
       },
-      { status: 500 }
+      { status }
     );
   }
 }
