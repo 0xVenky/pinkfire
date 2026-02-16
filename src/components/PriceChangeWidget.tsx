@@ -25,7 +25,7 @@ const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' })
     setLocalTime(new Date().toLocaleTimeString());
     const timer = setInterval(() => {
       setLocalTime(new Date().toLocaleTimeString());
-    }, 60000); // Update every 60 seconds instead of 1 second
+    }, 1000); // Update every second for real-time clock
     return () => clearInterval(timer);
   }, []);
 
@@ -47,11 +47,11 @@ const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' })
   const isPositive = displayChange > 0;
 
   const formatPrice = (value: number): string => {
-    return value.toFixed(2);
+    return isFinite(value) ? value.toFixed(2) : '0.00';
   };
 
   const formatChange = (value: number): string => {
-    return Math.abs(value).toFixed(2);
+    return isFinite(value) ? Math.abs(value).toFixed(2) : '0.00';
   };
 
   // Prevent hydration mismatch by only rendering time after mount

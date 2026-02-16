@@ -111,9 +111,9 @@ export default function Home() {
         )}
 
         {/* Price Change Widget Section */}
-        <div className="mb-12 flex justify-center">
+        <section aria-label="Price information" className="mb-12 flex justify-center">
           <PriceChangeWidget />
-        </div>
+        </section>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
