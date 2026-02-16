@@ -41,7 +41,11 @@ export const PriceCard: React.FC<PriceCardProps> = ({
           <p className="text-gray-400 text-sm mb-1">UNI Price (24h)</p>
           <div className="flex items-baseline gap-3">
             {isLoading ? (
-              <div className="h-10 w-32 bg-pinkfire-border rounded animate-pulse" />
+              <div
+                className="h-10 w-32 bg-pinkfire-border rounded animate-pulse"
+                role="status"
+                aria-label="Loading UNI price"
+              />
             ) : (
               <>
                 <span className="text-white text-4xl font-bold">

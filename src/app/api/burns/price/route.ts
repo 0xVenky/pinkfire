@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPriceChangeData, getCurrentUniPrice, get24hPriceChange } from '@/lib/price';
+import { getPriceChangeData } from '@/lib/price';
 
 /**
  * GET /api/burns/price

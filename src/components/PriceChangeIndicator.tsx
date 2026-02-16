@@ -107,7 +107,7 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
       <div className={`flex items-center gap-1 ${colorClasses}`}>
         <svg
           className={`w-4 h-4 transition-transform duration-300 ${
-            isNeutral ? '' : isPositive ? '' : 'rotate-180'
+            !isPositive && !isNeutral ? 'rotate-180' : ''
           }`}
           viewBox="0 0 24 24"
           fill="none"
@@ -136,7 +136,7 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
           className={`transition-transform duration-300 ${
             size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'
           } ${
-            isNeutral ? '' : isPositive ? '' : 'rotate-180'
+            !isPositive && !isNeutral ? 'rotate-180' : ''
           }`}
           viewBox="0 0 24 24"
           fill="none"

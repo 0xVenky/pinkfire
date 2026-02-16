@@ -1,5 +1,3 @@
-import { db } from './database';
-
 const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
 const UNI_COIN_ID = 'uniswap';
 
@@ -83,6 +81,13 @@ export async function getHistoricalUniPrice(date: string | Date): Promise<number
  * Get 24-hour price change percentage
  */
 export async function get24hPriceChange(): Promise<number> {
+  const cacheKey = '24h-change';
+  const cached = priceCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+
   try {
     const response = await fetch(
       `${COINGECKO_API_BASE}/simple/price?ids=${UNI_COIN_ID}&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24h_change=true`
@@ -99,6 +104,7 @@ export async function get24hPriceChange(): Promise<number> {
       throw new Error('Invalid 24h change data from CoinGecko');
     }
 
+    priceCache.set(cacheKey, { data: change, timestamp: Date.now() });
     return change;
   } catch (error) {
     console.error('Error fetching 24h price change:', error);
@@ -119,6 +125,11 @@ export async function getPriceChangeData(): Promise<{
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const price24hAgo = await getHistoricalUniPrice(yesterday);
+
+    if (price24hAgo === 0) {
+      throw new Error('Invalid historical price: cannot be zero');
+    }
+
     const changePercent = ((currentPrice - price24hAgo) / price24hAgo) * 100;
 
     return {
