@@ -1,6 +1,6 @@
-use client';
+'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 interface PriceData {
@@ -15,8 +15,10 @@ export function PriceDisplay() {
   const [displayTime, setDisplayTime] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
+  const isInitialized = useRef(false);
 
   const isPositive = displayChange !== null && displayChange > 0;
+  const isNeutral = displayChange === 0;
 
   const { data, isLoading: isQueryLoading, refetch } = useQuery<PriceData>({
     queryKey: ['uniPrice'],
@@ -34,7 +36,15 @@ export function PriceDisplay() {
     staleTime: 7000,
   });
 
+  // Consolidated initialization and data update effect
   useEffect(() => {
+    if (!isInitialized.current) {
+      setDisplayPrice(0);
+      setDisplayChange(0);
+      setDisplayTime(new Date().toLocaleTimeString());
+      isInitialized.current = true;
+    }
+
     if (data) {
       setIsLoading(true);
       const timer = setTimeout(() => {
@@ -50,7 +60,11 @@ export function PriceDisplay() {
 
   const handleManualRefresh = useCallback(async () => {
     setIsLoading(true);
-    await refetch();
+    try {
+      await refetch();
+    } finally {
+      setIsLoading(false);
+    }
   }, [refetch]);
 
   const formatPrice = (val: number): string => {
@@ -60,15 +74,6 @@ export function PriceDisplay() {
   const formatChange = (val: number): string => {
     return Math.abs(val).toFixed(2);
   };
-
-  // Initialize with default values
-  useEffect(() => {
-    if (displayPrice === null) {
-      setDisplayPrice(0);
-      setDisplayChange(0);
-      setDisplayTime(new Date().toLocaleTimeString());
-    }
-  }, []);
 
   return (
     <div className="w-full max-w-md">
@@ -117,12 +122,12 @@ export function PriceDisplay() {
             {/* Arrow indicator */}
             <div
               className={`rounded-lg px-3 py-1.5 transition-all duration-300 flex items-center gap-1.5 ${
-                isPositive ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                isPositive ? 'bg-emerald-500/20' : isNeutral ? 'bg-gray-500/20' : 'bg-red-500/20'
               }`}
             >
               <svg
                 className={`h-4 w-4 transition-transform duration-300 ${
-                  isPositive ? 'text-emerald-400 rotate-0' : 'text-red-400 rotate-180'
+                  isPositive ? 'text-emerald-400 rotate-0' : isNeutral ? 'text-gray-400 rotate-0' : 'text-red-400 rotate-180'
                 }`}
                 fill="none"
                 stroke="currentColor"
@@ -137,10 +142,10 @@ export function PriceDisplay() {
               </svg>
               <span
                 className={`text-sm font-semibold ${
-                  isPositive ? 'text-emerald-400' : 'text-red-400'
+                  isPositive ? 'text-emerald-400' : isNeutral ? 'text-gray-400' : 'text-red-400'
                 }`}
               >
-                {isPositive ? '+' : '-'}
+                {isPositive ? '+' : ''}
                 {displayChange !== null ? formatChange(displayChange) : '0.00'}%
               </span>
             </div>
