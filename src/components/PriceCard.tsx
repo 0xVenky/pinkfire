@@ -36,26 +36,29 @@ export const PriceCard: React.FC<PriceCardProps> = ({
 
   return (
     <div className="bg-pinkfire-card border border-pinkfire-border rounded-lg p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-400 text-sm mb-1">UNI Price (24h)</p>
-          <div className="flex items-baseline gap-3">
-            {isLoading ? (
-              <div
-                className="h-10 w-32 bg-pinkfire-border rounded animate-pulse"
-                role="status"
-                aria-label="Loading UNI price"
-              />
-            ) : (
-              <>
-                <span className="text-white text-4xl font-bold">
-                  ${currentPrice.toFixed(2)}
-                </span>
-                <PriceChangeIndicator changePercent={changePercent24h} />
-              </>
-            )}
-          </div>
-        </div>
+      <p className="text-gray-400 text-sm mb-1">UNI Price (24h)</p>
+      <div className="flex items-baseline gap-3">
+        {isLoading ? (
+          <>
+            <div
+              className="h-10 w-32 bg-pinkfire-border rounded animate-pulse"
+              role="status"
+              aria-label="Loading UNI price"
+            />
+            <div
+              className="h-6 w-20 bg-pinkfire-border rounded animate-pulse"
+              role="status"
+              aria-label="Loading price change"
+            />
+          </>
+        ) : (
+          <>
+            <span className="text-white text-4xl font-bold">
+              ${currentPrice.toFixed(2)}
+            </span>
+            <PriceChangeIndicator changePercent={changePercent24h} />
+          </>
+        )}
       </div>
     </div>
   );

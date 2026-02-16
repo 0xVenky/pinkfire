@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
 interface PriceChangeIndicatorProps {
   /** The percentage change in price (positive or negative) */
@@ -24,22 +24,22 @@ export const PriceChangeIndicator: React.FC<PriceChangeIndicatorProps> = ({
   currentPrice,
   size = 'md',
 }) => {
-  const absPercentage = useMemo(() => Math.abs(changePercent).toFixed(2), [changePercent]);
+  const absPercentage = Math.abs(changePercent).toFixed(2);
   const isPositive = changePercent > 0;
   const isNeutral = changePercent === 0;
 
   // Color classes based on change direction
-  const colorClasses = useMemo(() => {
-    if (isPositive) return 'text-pinkfire-green';
-    if (isNeutral) return 'text-gray-400';
-    return 'text-pinkfire-red';
-  }, [isPositive, isNeutral]);
+  const colorClasses = isPositive
+    ? 'text-pinkfire-green'
+    : isNeutral
+      ? 'text-gray-400'
+      : 'text-pinkfire-red';
 
-  const bgColorClasses = useMemo(() => {
-    if (isPositive) return 'bg-pinkfire-green/10 border-pinkfire-green/30';
-    if (isNeutral) return 'bg-gray-700/30 border-gray-600/30';
-    return 'bg-pinkfire-red/10 border-pinkfire-red/30';
-  }, [isPositive, isNeutral]);
+  const bgColorClasses = isPositive
+    ? 'bg-pinkfire-green/10 border-pinkfire-green/30'
+    : isNeutral
+      ? 'bg-gray-700/30 border-gray-600/30'
+      : 'bg-pinkfire-red/10 border-pinkfire-red/30';
 
   // Arrow Icon Component
   const ArrowIcon = () => {
