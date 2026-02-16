@@ -1,7 +1,9 @@
-export { Header } from './Header';
-export { StatCard } from './StatCard';
-export { BurnChart } from './BurnChart';
-export { RefreshIndicator } from './RefreshIndicator';
-export { Footer } from './Footer';
-export { InflationChart } from './InflationChart';
-export { UnvestingChart } from './UnvestingChart';
+export { default as Header } from './Header';
+export { default as Footer } from './Footer';
+export { default as StatCard } from './StatCard';
+export { default as BurnChart } from './BurnChart';
+export { default as InflationChart } from './InflationChart';
+export { default as UnvestingChart } from './UnvestingChart';
+export { default as RefreshIndicator } from './RefreshIndicator';
+export { default as Providers } from './Providers';
+export { default as PriceChangeWidget } from './PriceChangeWidget';
