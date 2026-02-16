@@ -41,7 +41,7 @@ function formatUSD(value: number): string {
   }).format(value);
 }
 
-const Home = () => {
+export default function Home() {
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -99,6 +99,7 @@ const Home = () => {
           isRefreshing={isRefreshing || isLoading}
           onRefresh={handleRefresh}
         />
+        {/* Data refresh status indicator */}
         <RefreshIndicator />
 
         {hasError && (
@@ -176,6 +177,4 @@ const Home = () => {
       <Footer />
     </main>
   );
-};
-
-export default Home;
+}

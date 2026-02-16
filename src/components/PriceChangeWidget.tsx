@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 interface PriceChangeWidgetProps {
@@ -18,8 +18,10 @@ interface SummaryResponse {
 
 const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' }) => {
   const [localTime, setLocalTime] = useState<string>('');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setLocalTime(new Date().toLocaleTimeString());
     const timer = setInterval(() => {
       setLocalTime(new Date().toLocaleTimeString());
@@ -51,6 +53,18 @@ const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' })
   const formatChange = (value: number): string => {
     return Math.abs(value).toFixed(2);
   };
+
+  // Prevent hydration mismatch by only rendering time after mount
+  if (!isMounted) {
+    return (
+      <div className={`w-full max-w-sm ${className}`}>
+        <div className="bg-[#16161f] rounded-xl p-8 border border-[#2e2e3a] shadow-lg animate-pulse">
+          <div className="h-8 bg-[#2e2e3a] rounded w-24 mb-6"></div>
+          <div className="h-12 bg-[#2e2e3a] rounded w-32 mb-4"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
