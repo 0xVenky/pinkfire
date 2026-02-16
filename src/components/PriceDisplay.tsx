@@ -15,7 +15,6 @@ export function PriceDisplay() {
   const [displayTime, setDisplayTime] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
-  const isInitialized = useRef(false);
 
   const isPositive = displayChange !== null && displayChange > 0;
   const isNeutral = displayChange === 0;
@@ -25,10 +24,12 @@ export function PriceDisplay() {
     queryFn: async () => {
       const response = await fetch('/api/burns/summary');
       if (!response.ok) throw new Error('Failed to fetch price data');
-      const data = await response.json();
+      const jsonData = await response.json();
+      // Safely extract price data with fallbacks
+      const priceData = jsonData.data || {};
       return {
-        currentPrice: data.currentUniPrice || 0,
-        change24h: data.change24h || 0,
+        currentPrice: priceData.current_uni_price ?? 0,
+        change24h: priceData.change_24h ?? 0,
         lastUpdated: new Date().toLocaleTimeString(),
       };
     },
@@ -36,15 +37,15 @@ export function PriceDisplay() {
     staleTime: 7000,
   });
 
-  // Consolidated initialization and data update effect
+  // Initialize display on first mount
   useEffect(() => {
-    if (!isInitialized.current) {
-      setDisplayPrice(0);
-      setDisplayChange(0);
-      setDisplayTime(new Date().toLocaleTimeString());
-      isInitialized.current = true;
-    }
+    setDisplayPrice(0);
+    setDisplayChange(0);
+    setDisplayTime(new Date().toLocaleTimeString());
+  }, []);
 
+  // Update display when data changes
+  useEffect(() => {
     if (data) {
       setIsLoading(true);
       const timer = setTimeout(() => {
@@ -121,7 +122,7 @@ export function PriceDisplay() {
           <div className="flex animate-in slide-in-from-bottom-1 duration-300 items-center gap-2">
             {/* Arrow indicator */}
             <div
-              className={`rounded-lg px-3 py-1.5 transition-all duration-300 flex items-center gap-1.5 ${
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all duration-300 ${
                 isPositive ? 'bg-emerald-500/20' : isNeutral ? 'bg-gray-500/20' : 'bg-red-500/20'
               }`}
             >
@@ -169,7 +170,7 @@ export function PriceDisplay() {
       <button
         onClick={handleManualRefresh}
         disabled={isLoading || isQueryLoading}
-        className="active:scale-95 mt-4 w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-300 hover:from-purple-500 hover:to-pink-500 hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:from-gray-700 disabled:to-gray-700"
+        className="mt-4 w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-300 hover:from-purple-500 hover:to-pink-500 hover:shadow-purple-500/25 active:scale-95 disabled:cursor-not-allowed disabled:from-gray-700 disabled:to-gray-700"
         aria-busy={isLoading || isQueryLoading}
         aria-label="Refresh UNI price"
       >

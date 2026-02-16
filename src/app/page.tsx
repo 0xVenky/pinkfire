@@ -7,7 +7,8 @@ import { InflationChart } from '@/components/InflationChart';
 import { UnvestingChart } from '@/components/UnvestingChart';
 import { PriceDisplay } from '@/components/PriceDisplay';
 import { Footer } from '@/components/Footer';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import type { BurnSummary, ChartDataPoint } from '@/types';
 import { CONSTANTS } from '@/lib/constants';
 
@@ -38,6 +39,8 @@ function formatUSD(value: number): string {
 }
 
 export default function Home() {
+  const queryClient = useQueryClient();
+
   const {
     data: dailyData,
     isLoading: isDailyLoading,
@@ -64,16 +67,30 @@ export default function Home() {
     refetchInterval: CONSTANTS.REFRESH_INTERVAL_MS,
   });
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['daily-burns'] });
+    await queryClient.invalidateQueries({ queryKey: ['burn-summary'] });
+  }, [queryClient]);
+
   const chartData = dailyData?.data || [];
   const summary = summaryData?.data;
   const isLoading = isDailyLoading || isSummaryLoading;
+
+  // Calculate average daily burn rate from chart data
+  const calculateBurnRate = (): string => {
+    if (!summary?.total_uni_burned || chartData.length < 2) {
+      return '0 UNI/day';
+    }
+    const averageDailyBurn = summary.total_uni_burned / Math.max(chartData.length, 1);
+    return `${formatNumber(averageDailyBurn)} UNI/day`;
+  };
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <Header
         lastUpdated={summary?.last_updated || null}
         isRefreshing={isLoading}
-        onRefresh={() => window.location.reload()}
+        onRefresh={handleRefresh}
       />
       
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -111,11 +128,7 @@ export default function Home() {
             />
             <StatCard
               title="Burn Rate"
-              value={
-                summary?.total_uni_burned && chartData.length > 1
-                  ? `${(summary.total_uni_burned / chartData.length).toFixed(0)} UNI/day`
-                  : '0 UNI/day'
-              }
+              value={calculateBurnRate()}
               isLoading={isLoading}
             />
             <StatCard
