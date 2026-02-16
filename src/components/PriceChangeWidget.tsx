@@ -7,10 +7,13 @@ interface PriceChangeWidgetProps {
   className?: string;
 }
 
-interface PriceData {
-  currentPrice: number;
-  priceChange24h: number;
-  lastUpdated: string;
+interface SummaryResponse {
+  success: boolean;
+  data: {
+    current_uni_price?: number;
+    price_change_24h?: number;
+  } | null;
+  error?: string;
 }
 
 const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' }) => {
@@ -20,30 +23,25 @@ const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' })
     setLocalTime(new Date().toLocaleTimeString());
     const timer = setInterval(() => {
       setLocalTime(new Date().toLocaleTimeString());
-    }, 1000);
+    }, 60000); // Update every 60 seconds instead of 1 second
     return () => clearInterval(timer);
   }, []);
 
-  const { data: priceData, isLoading } = useQuery<PriceData>({
+  const { data, isLoading, error } = useQuery<SummaryResponse>({
     queryKey: ['uniPrice'],
     queryFn: async () => {
       const response = await fetch('/api/burns/summary');
       if (!response.ok) {
         throw new Error('Failed to fetch price data');
       }
-      const json = await response.json();
-      return {
-        currentPrice: json.currentPrice || 0,
-        priceChange24h: json.priceChange24h || 0,
-        lastUpdated: new Date().toISOString(),
-      };
+      return response.json();
     },
-    refetchInterval: 3000, // Refetch every 3 seconds
-    staleTime: 2000,
+    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 59000,
   });
 
-  const displayPrice = priceData?.currentPrice ?? 0;
-  const displayChange = priceData?.priceChange24h ?? 0;
+  const displayPrice = data?.data?.current_uni_price ?? 0;
+  const displayChange = data?.data?.price_change_24h ?? 0;
   const isPositive = displayChange > 0;
 
   const formatPrice = (value: number): string => {
@@ -53,6 +51,16 @@ const PriceChangeWidget: React.FC<PriceChangeWidgetProps> = ({ className = '' })
   const formatChange = (value: number): string => {
     return Math.abs(value).toFixed(2);
   };
+
+  if (error) {
+    return (
+      <div className={`w-full max-w-sm ${className}`}>
+        <div className="bg-[#16161f] rounded-xl p-8 border border-[#ef4444]/30 shadow-lg">
+          <p className="text-[#ef4444] text-sm">Failed to load price data. Please try refreshing.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`w-full max-w-sm ${className}`}>
