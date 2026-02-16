@@ -1,86 +1,54 @@
 export interface DailyBurn {
   date: string;
-  cumulative_uni: number;
-  daily_uni: number;
-  uni_price_usd: number | null;
-  daily_usd_value: number | null;
-  cumulative_usd_value: number | null;
-  updated_at: string;
+  burnAmount: number;
+  burnsCount: number;
+  avgGasPrice: number | null;
+  avgUsdValue: number | null;
 }
 
 export interface BurnTransaction {
-  tx_hash: string;
-  block_number: number;
-  timestamp: string;
-  uni_amount: number;
-  uni_price_usd: number | null;
-  usd_value: number | null;
-  from_address: string;
+  hash: string;
+  blockNumber: number;
+  timestamp: number;
+  from: string;
+  to: string;
+  value: number;
+  gasPrice: number | null;
+  usdValue: number | null;
 }
 
 export interface BurnSummary {
-  total_uni_burned: number;
-  current_usd_value: number | null;
-  historical_usd_value: number | null;
-  today_burns: number;
-  current_uni_price: number | null;
-  last_updated: string;
+  totalBurned: number;
+  dailyAggregates: DailyBurn[];
+  lastUpdated: string;
 }
 
 export interface ChartDataPoint {
   date: string;
-  displayDate: string;
-  cumulative_uni: number;
-  daily_uni: number;
-  usd_value: number | null;
-  isLive?: boolean;
+  amount: number;
+  usdValue?: number;
 }
 
-export interface BlockScoutTokenTransfer {
-  block_number: number;
-  timestamp: string;
-  transaction_hash: string;
-  from: {
-    hash: string;
-  };
-  to: {
-    hash: string;
-  };
-  token: {
-    address: string;
-    symbol: string;
-    decimals: string;
-  };
-  total: {
-    value: string;
-    decimals: string;
-  };
-}
-
-export interface BlockScoutTokenBalance {
-  token: {
-    address: string;
-    symbol: string;
-    name: string;
-    decimals: string;
-    exchange_rate: string | null;
-  };
+export interface BlockScoutTransaction {
+  hash: string;
+  blockNumber: string;
+  timeStamp: string;
+  from: string;
+  to: string;
   value: string;
+  gasPrice: string | null;
+  contractAddress: string;
+  tokenDecimal: string;
 }
 
-export interface BlockScoutTokenInfo {
-  address: string;
-  symbol: string;
-  name: string;
-  decimals: string;
-  exchange_rate: string | null;
+export interface BlockScoutResponse<T> {
+  status: string;
+  message: string;
+  result: T;
 }
 
-export interface BlockScoutTransferResponse {
-  items: BlockScoutTokenTransfer[];
-  next_page_params: {
-    block_number: number;
-    index: number;
-    items_count: number;
-  } | null;
+export interface PriceChangeData {
+  currentPrice: number;
+  price24hAgo: number;
+  changePercent: number;
 }
