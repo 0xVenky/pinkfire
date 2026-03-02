@@ -1,7 +1,10 @@
 export { Header } from './Header';
+export { Footer } from './Footer';
 export { StatCard } from './StatCard';
 export { BurnChart } from './BurnChart';
-export { RefreshIndicator } from './RefreshIndicator';
-export { Footer } from './Footer';
 export { InflationChart } from './InflationChart';
 export { UnvestingChart } from './UnvestingChart';
+export { RefreshIndicator } from './RefreshIndicator';
+export { Providers } from './Providers';
+export { PriceCard } from './PriceCard';
+export { PriceChangeIndicator } from './PriceChangeIndicator';
