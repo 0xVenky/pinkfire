@@ -1,7 +1,16 @@
 'use client';
 
+import {
+  Header,
+  StatCard,
+  BurnChart,
+  InflationChart,
+  UnvestingChart,
+  RefreshIndicator,
+  Footer,
+  PriceChangeWidget,
+} from '@/components';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Header, StatCard, BurnChart, Footer, InflationChart, UnvestingChart } from '@/components';
 import type { BurnSummary, ChartDataPoint } from '@/types';
 import { CONSTANTS } from '@/lib/constants';
 import { useState, useCallback } from 'react';
@@ -83,13 +92,15 @@ export default function Home() {
   const hasError = dailyError || summaryError;
 
   return (
-    <main className="min-h-screen bg-[#0D0D0D] text-white">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <main className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#16161f] to-[#0a0a0f] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Header
           lastUpdated={summary?.last_updated || null}
           isRefreshing={isRefreshing || isLoading}
           onRefresh={handleRefresh}
         />
+        {/* Data refresh status indicator */}
+        <RefreshIndicator />
 
         {hasError && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
@@ -99,8 +110,13 @@ export default function Home() {
           </div>
         )}
 
+        {/* Price Change Widget Section */}
+        <section aria-label="Price information" className="mb-12 flex justify-center">
+          <PriceChangeWidget />
+        </section>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <StatCard
             title="Total UNI Burned"
             value={
@@ -145,17 +161,20 @@ export default function Home() {
         {/* Inflation Analysis Chart */}
         <InflationChart currentBurn={summary?.total_uni_burned || 0} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Unvesting Analysis Chart */}
-          <UnvestingChart data={chartData} />
-
-          {/* Chart */}
-          <BurnChart data={chartData} isLoading={isDailyLoading} />
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 mt-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-6">Burn History</h2>
+            <BurnChart data={chartData} isLoading={isDailyLoading} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[#f1f5f9] mb-6">Unvesting Comparison</h2>
+            <UnvestingChart data={chartData} />
+          </div>
         </div>
-
-        {/* Footer Info */}
-        <Footer />
       </div>
+
+      <Footer />
     </main>
   );
 }
