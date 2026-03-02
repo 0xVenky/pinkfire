@@ -1,10 +1,16 @@
 'use client';
 
+import { Header } from '@/components/Header';
+import { StatCard } from '@/components/StatCard';
+import { BurnChart } from '@/components/BurnChart';
+import { InflationChart } from '@/components/InflationChart';
+import { UnvestingChart } from '@/components/UnvestingChart';
+import { PriceDisplay } from '@/components/PriceDisplay';
+import { Footer } from '@/components/Footer';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Header, StatCard, BurnChart, Footer, InflationChart, UnvestingChart } from '@/components';
+import { useCallback } from 'react';
 import type { BurnSummary, ChartDataPoint } from '@/types';
 import { CONSTANTS } from '@/lib/constants';
-import { useState, useCallback } from 'react';
 
 interface DailyBurnsResponse {
   success: boolean;
@@ -34,12 +40,10 @@ function formatUSD(value: number): string {
 
 export default function Home() {
   const queryClient = useQueryClient();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const {
     data: dailyData,
     isLoading: isDailyLoading,
-    error: dailyError,
   } = useQuery<DailyBurnsResponse>({
     queryKey: ['daily-burns'],
     queryFn: async () => {
@@ -53,7 +57,6 @@ export default function Home() {
   const {
     data: summaryData,
     isLoading: isSummaryLoading,
-    error: summaryError,
   } = useQuery<SummaryResponse>({
     queryKey: ['burn-summary'],
     queryFn: async () => {
@@ -65,97 +68,102 @@ export default function Home() {
   });
 
   const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      await fetch('/api/burns/refresh');
-      await queryClient.invalidateQueries({ queryKey: ['daily-burns'] });
-      await queryClient.invalidateQueries({ queryKey: ['burn-summary'] });
-    } catch (error) {
-      console.error('Refresh error:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
+    await queryClient.invalidateQueries({ queryKey: ['daily-burns'] });
+    await queryClient.invalidateQueries({ queryKey: ['burn-summary'] });
   }, [queryClient]);
 
   const chartData = dailyData?.data || [];
   const summary = summaryData?.data;
   const isLoading = isDailyLoading || isSummaryLoading;
-  const hasError = dailyError || summaryError;
+
+  // Calculate average daily burn rate from chart data
+  const calculateBurnRate = (): string => {
+    if (!summary?.total_uni_burned || chartData.length < 2) {
+      return '0 UNI/day';
+    }
+    const averageDailyBurn = summary.total_uni_burned / Math.max(chartData.length, 1);
+    return `${formatNumber(averageDailyBurn)} UNI/day`;
+  };
 
   return (
-    <main className="min-h-screen bg-[#0D0D0D] text-white">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Header
-          lastUpdated={summary?.last_updated || null}
-          isRefreshing={isRefreshing || isLoading}
-          onRefresh={handleRefresh}
-        />
-
-        {hasError && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-            <p className="text-red-400">
-              Error loading data. Please try refreshing.
-            </p>
+    <main className="min-h-screen bg-gray-950 text-white">
+      <Header
+        lastUpdated={summary?.last_updated || null}
+        isRefreshing={isLoading}
+        onRefresh={handleRefresh}
+      />
+      
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Price Display Section */}
+        <section className="mb-12">
+          <h2 className="mb-6 text-2xl font-bold tracking-tight">Price Overview</h2>
+          <div className="flex justify-center">
+            <PriceDisplay />
           </div>
-        )}
+        </section>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <StatCard
-            title="Total UNI Burned"
-            value={
-              summary?.total_uni_burned
-                ? `${formatNumber(summary.total_uni_burned)} UNI`
-                : '0 UNI'
-            }
-            subtitle={
-              summary?.historical_usd_value
-                ? `USD Value at burn: ${formatUSD(summary.historical_usd_value)}`
-                : undefined
-            }
-            isLoading={isLoading}
-            highlight
-          />
-          <StatCard
-            title="Current UNI Price"
-            value={
-              summary?.current_uni_price
-                ? new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }).format(summary.current_uni_price)
-                : '$0.00'
-            }
-            isLoading={isLoading}
-          />
-          <StatCard
-            title="Today's Burns"
-            value={
-              summary?.today_burns
-                ? `${formatNumber(summary.today_burns)} UNI`
-                : '0 UNI'
-            }
-            subtitle="Since midnight UTC"
-            isLoading={isLoading}
-          />
-        </div>
+        <section className="mb-12">
+          <h2 className="mb-6 text-2xl font-bold tracking-tight">Burn Statistics</h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title="Total Burned"
+              value={
+                summary?.total_uni_burned
+                  ? `${formatNumber(summary.total_uni_burned)} UNI`
+                  : '0 UNI'
+              }
+              isLoading={isLoading}
+              highlight
+            />
+            <StatCard
+              title="Today's Burns"
+              value={
+                summary?.today_burns
+                  ? `${formatNumber(summary.today_burns)} UNI`
+                  : '0 UNI'
+              }
+              subtitle="Since midnight UTC"
+              isLoading={isLoading}
+            />
+            <StatCard
+              title="Burn Rate"
+              value={calculateBurnRate()}
+              isLoading={isLoading}
+            />
+            <StatCard
+              title="Current UNI Price"
+              value={
+                summary?.current_uni_price
+                  ? new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(summary.current_uni_price)
+                  : '$0.00'
+              }
+              isLoading={isLoading}
+            />
+          </div>
+        </section>
 
-        {/* Inflation Analysis Chart */}
-        <InflationChart currentBurn={summary?.total_uni_burned || 0} />
+        {/* Charts Grid */}
+        <section className="mb-12">
+          <h2 className="mb-6 text-2xl font-bold tracking-tight">Analytics</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <BurnChart data={chartData} isLoading={isDailyLoading} />
+            <InflationChart currentBurn={summary?.total_uni_burned || 0} />
+          </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Unvesting Analysis Chart */}
+        {/* Unvesting Chart */}
+        <section className="mb-12">
           <UnvestingChart data={chartData} />
-
-          {/* Chart */}
-          <BurnChart data={chartData} isLoading={isDailyLoading} />
-        </div>
-
-        {/* Footer Info */}
-        <Footer />
+        </section>
       </div>
+
+      <Footer />
     </main>
   );
 }
